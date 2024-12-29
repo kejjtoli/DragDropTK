@@ -174,14 +174,16 @@ class DragManager():
         widget.bind("<ButtonRelease-1>", self.on_drop)
 
         #allElements.append(widget)
-        allElements[widget] = {
-            "x" : self.centerpoint.x,
-            "y" : self.centerpoint.y
-        }
+        allElements[widget] = {}
 
         resetWidgets(widget)
         self.fun(widget, True)
         resetSelectors(None)
+
+        allElements[widget] = {
+            "x" : widget.winfo_x() + int(widget.winfo_width() / 2),
+            "y" : widget.winfo_y() + int(widget.winfo_height() / 2)
+        }
     
     def destroy_workspace(self, xres, yres):
         workspaceWidgets = []

@@ -100,83 +100,84 @@ def saveFile():
 def loadFile():
     path = askopenfile(defaultextension=".json", filetypes=[('Save File', '*.json')], initialdir="savefiles")
     
-    if path.name != '':
-        file = open(path.name, mode='r')
+    if path != None:
+        if path.name != '':
+            file = open(path.name, mode='r')
 
-        build_lib = fls.load_from_json(file)
+            build_lib = fls.load_from_json(file)
 
-        newWorkspace(build_lib["workspace"]["sizex"], build_lib["workspace"]["sizey"], None)
-        workspace.config(bg=build_lib["workspace"]["bg"])
+            newWorkspace(build_lib["workspace"]["sizex"], build_lib["workspace"]["sizey"], None)
+            workspace.config(bg=build_lib["workspace"]["bg"])
 
-        del build_lib["workspace"]
+            del build_lib["workspace"]
 
-        max_count = 0
+            max_count = 0
 
-        for key, value in build_lib.items():
-            mainType = value["mainType"]
+            for key, value in build_lib.items():
+                mainType = value["mainType"]
 
-            # Extract numerator
-            cnt = ""
-            for char in value["name"]:
-                if char.isnumeric():
-                    cnt = cnt + char
-            
-            if cnt != "":
-                if int(cnt) > max_count:
-                    max_count = int(cnt)
-                    widgetCount[mainType] = max_count
-            
-            newObj = getattr(tk, value["tkType"])(workspace, name=value["name"])
+                # Extract numerator
+                cnt = ""
+                for char in value["name"]:
+                    if char.isnumeric():
+                        cnt = cnt + char
+                
+                if cnt != "":
+                    if int(cnt) > max_count:
+                        max_count = int(cnt)
+                        widgetCount[mainType] = max_count
+                
+                newObj = getattr(tk, value["tkType"])(workspace, name=value["name"])
 
-            del value["tkType"]
-            del value["mainType"]
+                del value["tkType"]
+                del value["mainType"]
 
-            placeArgs = {
-                "anchor" : CENTER
-            }
-            configArgs = {}
+                placeArgs = {
+                    "anchor" : CENTER
+                }
+                configArgs = {}
 
-            #buildFont = {}
-            #addFont = False
+                #buildFont = {}
+                #addFont = False
 
-            for x, v in value.items():
-                if x == "font":
-                    configArgs[x] = v
-                else:
-                    if widgetArgs[x]["inType"] == "config":
+                for x, v in value.items():
+                    if x == "font":
                         configArgs[x] = v
-                    elif widgetArgs[x]["inType"] == "place":
-                        placeArgs[x] = v
-                    elif widgetArgs[x]["inType"] == "img":
-                        if v != '':
-                            if v in ImageLibrary.keys():
-                                configArgs['image'] = ImageLibrary[v]
-                                newObj.image_ref = ImageLibrary[v]
-                            else:
-                                try:
-                                    img1 = tk.PhotoImage(file=v)
-                                    ImageLibrary[v] = img1
-
+                    else:
+                        if widgetArgs[x]["inType"] == "config":
+                            configArgs[x] = v
+                        elif widgetArgs[x]["inType"] == "place":
+                            placeArgs[x] = v
+                        elif widgetArgs[x]["inType"] == "img":
+                            if v != '':
+                                if v in ImageLibrary.keys():
                                     configArgs['image'] = ImageLibrary[v]
                                     newObj.image_ref = ImageLibrary[v]
-                                except:
-                                    configArgs['image'] = ''
+                                else:
+                                    try:
+                                        img1 = tk.PhotoImage(file=v)
+                                        ImageLibrary[v] = img1
+
+                                        configArgs['image'] = ImageLibrary[v]
+                                        newObj.image_ref = ImageLibrary[v]
+                                    except:
+                                        configArgs['image'] = ''
 
 
+                
+                newObj.config(**configArgs)
+                newObj.place(**placeArgs)
+
+                #if mainType == "<class 'tkinter.Button'>":
+                #    newObj.config(state="disabled")
+
+                dnd.add_draggable(newObj)
+                addNewWidget(newObj, False)
             
-            newObj.config(**configArgs)
-            newObj.place(**placeArgs)
+            global defaultFilePath
+            defaultFilePath = path.name
 
-            #if mainType == "<class 'tkinter.Button'>":
-            #    newObj.config(state="disabled")
-
-            dnd.add_draggable(newObj)
-            addNewWidget(newObj, False)
-        
-        global defaultFilePath
-        defaultFilePath = path.name
-
-        root.update()
+            root.update()
 
 
 def addElement(elType):
