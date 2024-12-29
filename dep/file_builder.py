@@ -28,8 +28,8 @@ root.resizable(False, False)''')
         if widget.winfo_name() != "barx" and widget.winfo_name() != "bary":
             elType = str(type(widget))
 
-            newline = "\n" + widget.winfo_name()[1:] + " = tk." + str(elType[16:][:-2]) +"(root"
-            newline1 = "\n" + widget.winfo_name()[1:] + ".place(anchor=CENTER"
+            newline = "\n" + widget.winfo_name() + " = tk." + str(elType[16:][:-2]) +"(root"
+            newline1 = "\n" + widget.winfo_name() + ".place(anchor=CENTER"
 
             buildFont = {}
             useFont = False
@@ -62,10 +62,10 @@ root.resizable(False, False)''')
                 newline = newline + ", font=(" + buildFont["font-family"] + ", " + buildFont["font-size"] + ", " + buildFont["font-type"] + ")"
 
             if type(widget) == tk.Button:
-                newline = newline + ", command=press_" + widget.winfo_name()[1:]
+                newline = newline + ", command=press_" + widget.winfo_name()
 
-                main_code.insert(4, "\tprint('" + widget.winfo_name()[1:] + " pressed!')\n")
-                main_code.insert(4, "\ndef " + "press_" + widget.winfo_name()[1:] + "():\n")
+                main_code.insert(4, "\tprint('" + widget.winfo_name() + " pressed!')\n")
+                main_code.insert(4, "\ndef " + "press_" + widget.winfo_name() + "():\n")
 
             newline = newline + ")"
             newline1 = newline1 + ")\n"
@@ -98,7 +98,7 @@ def save_to_json(workspace, size, bld, file):
     for widget in workspace.winfo_children():
         if widget.winfo_name() != "barx" and widget.winfo_name() != "bary":
             elType = str(type(widget))
-            mainKey = widget.winfo_name()[1:]
+            mainKey = widget.winfo_name()
 
             data[mainKey] = {}
 
