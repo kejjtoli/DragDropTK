@@ -1,3 +1,3 @@
-savefiles
+savefiles/*
 __pycache__
 dep/__pycache__

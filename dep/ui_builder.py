@@ -7,6 +7,12 @@ allElements = {}
 
 allSelectors = {}
 
+widgetCount = {
+    "<class 'tkinter.Frame'>" : 0,
+    "<class 'tkinter.Label'>" : 0,
+    "<class 'tkinter.Button'>" : 0
+}
+
 class Vector2:
     def __init__(self, x, y):
         self.x = x
@@ -99,8 +105,9 @@ class DragManager():
             if selectedElement.winfo_name() != "workspace":
                 oldSelected = selectedElement
 
-                
-                selectedElement = getattr(tk, str(type(selectedElement))[16:][:-2])(self.workspace)
+                global widgetCount
+                widgetCount[str(type(selectedElement))] += 1
+                selectedElement = getattr(tk, str(type(selectedElement))[16:][:-2])(self.workspace, name=str(type(selectedElement))[16:][:-2].lower() + str(widgetCount[str(type(selectedElement))]))
 
                 addFont = False
                 fontBuild = {}
@@ -112,9 +119,16 @@ class DragManager():
                         if v["inType"] == "fontc":
                             fontBuild[key] = getElementArg(oldSelected, key)
                             addFont = True
+                        if v["inType"] == "img":
+                            if oldSelected.cget("image") != '':
+                                selectedElement.config(image=oldSelected.image_ref)
+                                selectedElement.image_ref = oldSelected.image_ref
 
                 if addFont:
                     selectedElement.config(font=(fontBuild["font-family"],fontBuild["font-size"],fontBuild["font-type"]))
+
+                #if type(selectedElement) == tk.Button:
+                #    selectedElement.config(state="disabled")
 
                 selectedElement.place(anchor=CENTER, x=self.centerpoint.x, y=self.centerpoint.y)
 
@@ -192,7 +206,12 @@ class DragManager():
         self.bar_x.config(height=yres)
         self.bar_y.config(width=xres)
 
+        global selectedElement
         selectedElement = None
+
+        global widgetCount
+        for k in widgetCount.keys():
+            widgetCount[k] = 0
         
 
     def add_widgetselector(self, widgets, target):
@@ -300,6 +319,15 @@ def getElementArg(el, info):
             return el.cget("font").split(" ")[2]
     elif info == "fg":
         return el.cget("fg")
+    elif info == "image-path":
+        if el.cget("image") == '':
+            return ''
+        else:
+            return el.image_ref.cget("file")
+    elif info == "activebackground":
+        return el.cget("activebackground")
+    elif info == "activeforeground":
+        return el.cget("activeforeground")
 
     return None
 
@@ -332,12 +360,22 @@ widgetArgs = {
     "bg" : {
         "argType" : "string",
         "inType" : "config",
-        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "workspace"]
+        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "workspace", "<class 'tkinter.Button'>"]
+    },
+    "activebackground" : {
+        "argType" : "string",
+        "inType" : "config",
+        "types" : ["<class 'tkinter.Button'>"]
     },
     "fg" : {
         "argType" : "string",
         "inType" : "config",
-        "types" : ["<class 'tkinter.Label'>"]
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>"]
+    },
+    "activeforeground" : {
+        "argType" : "string",
+        "inType" : "config",
+        "types" : ["<class 'tkinter.Button'>"]
     },
     "text" : {
         "argType" : "string",
@@ -357,6 +395,11 @@ widgetArgs = {
     "font-type" : {
         "argType" : "string",
         "inType" : "fontc",
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>"]
+    },
+    "image-path" : {
+        "argType" : "string",
+        "inType" : "img",
         "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>"]
     },
 }

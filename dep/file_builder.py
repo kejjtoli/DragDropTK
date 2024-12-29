@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import *
-from tkinter import ttk
 import json
+import os.path
 
 def generate_file(workspace, size, bld):
     main_code = []
@@ -10,7 +10,8 @@ def generate_file(workspace, size, bld):
 from tkinter import *
                 
 root = Tk()\n
-root.title("My Window")''')
+root.title("My Window")
+root.resizable(False, False)''')
     
     main_code.append('\nroot.geometry("' + str(size.x) + "x" + str(size.y) + '")')
     main_code.append('\nroot.config(bg="'+ workspace.cget('bg') +'")\n')
@@ -18,6 +19,10 @@ root.title("My Window")''')
     main_code.append('\n# Button functions\n')
 
     main_code.append('\n# Adding widgets\n')
+    
+    image_objects = []
+
+    images_block = "\n_images = {"
 
     for widget in workspace.winfo_children():
         if widget.winfo_name() != "barx" and widget.winfo_name() != "bary":
@@ -32,6 +37,7 @@ root.title("My Window")''')
             for x, wt in bld.widgetArgs.items():
                 if elType in wt["types"]:
                     v = bld.getElementArg(widget, x)
+                    oldV = v
                     if isinstance(v, str):
                         v = '"'+ str(v) +'"'
                     
@@ -42,6 +48,14 @@ root.title("My Window")''')
                     if wt["inType"] == "fontc":
                         buildFont[x] = str(v)
                         useFont = True
+                    if wt["inType"] == "img":
+                        if oldV != '':
+                            if oldV in image_objects:
+                                newline = newline + ", image=_images[" + v + "]"
+                            else:
+                                image_objects.append(str(oldV))
+                                images_block = images_block + "\n\t" + v + " : " + "tk.PhotoImage(file='" + oldV + "'),"
+                                newline = newline + ", image=_images[" + v + "]"
 
 
             if useFont:
@@ -59,7 +73,9 @@ root.title("My Window")''')
             main_code.append(newline)
             main_code.append(newline1)
 
+    images_block = images_block + "}\n"
 
+    main_code.insert(3, images_block)
 
     main_code.append("\nroot.mainloop()")
 
@@ -100,6 +116,8 @@ def save_to_json(workspace, size, bld, file):
                     if wt["inType"] == "fontc":
                         buildFont[x] = str(v)
                         useFont = True
+                    if wt["inType"] == "img":
+                        data[mainKey][x] = v
 
             if useFont:
                 data[mainKey]["font"] = (buildFont["font-family"], buildFont["font-size"], buildFont["font-type"])

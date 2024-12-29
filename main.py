@@ -63,7 +63,7 @@ def resetArgs(el, reset):
 dnd = DragManager(root, resetArgs, workspace, workspaceSize)
 
 def exportFile():
-    path = asksaveasfilename(defaultextension=".py", filetypes=[('Python Files', '*.py')])
+    path = asksaveasfilename(defaultextension=".py", filetypes=[('Python Files', '*.py')], initialdir="savefiles")
 
     if path != '':
         file = open(str(path), mode='w')
@@ -73,7 +73,7 @@ def exportFile():
         file.close()
 
 def saveAsFile():
-    path = asksaveasfilename(defaultextension=".json", filetypes=[('Save File', '*.json')])
+    path = asksaveasfilename(defaultextension=".json", filetypes=[('Save File', '*.json')], initialdir="savefiles")
     
     if path != '':
         file = open(str(path), mode='w')
@@ -88,7 +88,7 @@ def saveAsFile():
 def saveFile():
     global defaultFilePath
     if defaultFilePath == '':
-        defaultFilePath = asksaveasfilename(defaultextension=".json", filetypes=[('Save File', '*.json')])
+        defaultFilePath = asksaveasfilename(defaultextension=".json", filetypes=[('Save File', '*.json')], initialdir="savefiles")
     
     if defaultFilePath != '':
         file = open(str(defaultFilePath), mode='w')
@@ -98,7 +98,7 @@ def saveFile():
         file.close()
 
 def loadFile():
-    path = askopenfile(defaultextension=".json", filetypes=[('Save File', '*.json')])
+    path = askopenfile(defaultextension=".json", filetypes=[('Save File', '*.json')], initialdir="savefiles")
     
     if path.name != '':
         file = open(path.name, mode='r')
@@ -110,9 +110,23 @@ def loadFile():
 
         del build_lib["workspace"]
 
+        max_count = 0
+
         for key, value in build_lib.items():
-            newObj = getattr(tk, value["tkType"])(workspace, name=value["name"])
             mainType = value["mainType"]
+
+            # Extract numerator
+            cnt = ""
+            for char in value["name"]:
+                if char.isnumeric():
+                    cnt = cnt + char
+            
+            if cnt != "":
+                if int(cnt) > max_count:
+                    max_count = int(cnt)
+                    widgetCount[mainType] = max_count
+            
+            newObj = getattr(tk, value["tkType"])(workspace, name=value["name"])
 
             del value["tkType"]
             del value["mainType"]
@@ -122,8 +136,8 @@ def loadFile():
             }
             configArgs = {}
 
-            buildFont = {}
-            addFont = False
+            #buildFont = {}
+            #addFont = False
 
             for x, v in value.items():
                 if x == "font":
@@ -133,12 +147,28 @@ def loadFile():
                         configArgs[x] = v
                     elif widgetArgs[x]["inType"] == "place":
                         placeArgs[x] = v
+                    elif widgetArgs[x]["inType"] == "img":
+                        if v != '':
+                            if v in ImageLibrary.keys():
+                                configArgs['image'] = ImageLibrary[v]
+                                newObj.image_ref = ImageLibrary[v]
+                            else:
+                                try:
+                                    img1 = tk.PhotoImage(file=v)
+                                    ImageLibrary[v] = img1
+
+                                    configArgs['image'] = ImageLibrary[v]
+                                    newObj.image_ref = ImageLibrary[v]
+                                except:
+                                    configArgs['image'] = ''
+
+
             
             newObj.config(**configArgs)
             newObj.place(**placeArgs)
 
-            if mainType == "<class 'tkinter.Button'>":
-                newObj.config(state="disabled")
+            #if mainType == "<class 'tkinter.Button'>":
+            #    newObj.config(state="disabled")
 
             dnd.add_draggable(newObj)
             addNewWidget(newObj, False)
@@ -146,13 +176,13 @@ def loadFile():
         global defaultFilePath
         defaultFilePath = path.name
 
-                
-
+        root.update()
 
 
 def addElement(elType):
     if elType == "Frame":
-        newFrame = tk.Frame(workspace, height=64, width=64)
+        widgetCount["<class 'tkinter.Frame'>"] += 1
+        newFrame = tk.Frame(workspace, height=64, width=64, name="frame"+str(widgetCount["<class 'tkinter.Frame'>"]))
         newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER)
 
         newFrame.config(bg="#d0d5d9")
@@ -162,7 +192,8 @@ def addElement(elType):
         addNewWidget(newFrame, True)
         dnd.add_draggable(newFrame)
     if elType == "Label":
-        newFrame = tk.Label(workspace, text="Label Text", font=("Calibri", 20, "normal"))
+        widgetCount["<class 'tkinter.Label'>"] += 1
+        newFrame = tk.Label(workspace, text="Label Text", font=("Calibri", 20, "normal"), name="label"+str(widgetCount["<class 'tkinter.Label'>"]))
         newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER)
 
         newFrame.config(bg="#d0d5d9", fg="#1f2326")
@@ -172,10 +203,11 @@ def addElement(elType):
         addNewWidget(newFrame, True)
         dnd.add_draggable(newFrame)
     if elType == "Button":
-        newFrame = tk.Button(workspace, text="Button", font=("Calibri", 20, "normal"))
+        widgetCount["<class 'tkinter.Button'>"] += 1
+        newFrame = tk.Button(workspace, text="Button", font=("Calibri", 20, "normal"), name="button"+str(widgetCount["<class 'tkinter.Button'>"]))
         newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER)
 
-        newFrame.config(bg="#d0d5d9", fg="#1f2326", state="disabled")
+        newFrame.config(bg="#d0d5d9", fg="#1f2326", activebackground="#d0d5d9", activeforeground="#1f2326")
         
         #root.update()
 
@@ -197,6 +229,23 @@ def setArg(var, argName, type):
             currentEl.place(**{argName : v, "anchor" : CENTER})
         elif widgetArgs[argName]["inType"] == "config":
             currentEl.config(**{argName : v})
+        elif widgetArgs[argName]["inType"] == "img":
+            if v == '':
+                currentEl.config(image='')
+            else:
+                try:
+                    img1 = None
+                    if v in ImageLibrary.keys():
+                        img1 = ImageLibrary[v]
+                    else:
+                        img1 = tk.PhotoImage(file=v)
+                        ImageLibrary[v] = img1
+                    
+                    currentEl.config(image=img1)
+                    currentEl.image_ref = img1
+                except:
+                    currentEl.config(image='')
+                    var.set("")
         elif widgetArgs[argName]["inType"] == "fontc":
             currentFont = currentEl.cget("font")
             if currentFont[0] == "{":
@@ -236,7 +285,7 @@ def addNewArg(argName, parent, type):
         "frame" : newFrame
     }
 
-    newBox.bind("<Return>", lambda event:setArg(sVar, argName, type))
+    newBox.bind("<Return>", lambda event: setArg(sVar, argName, type))
 
 def addNewWidget(widget, ru):
     newFrame = tk.Frame(widgets_frame, height=24,  bg="#252d36",width=184)
