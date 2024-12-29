@@ -7,9 +7,14 @@ DragDropTK allows you to easily make tkinter UI designs with an easy to use drag
 <img align="center" src="https://github.com/kejjtoli/DragDropTK/blob/main/icons/interfaceExample.png?raw=true" alt="DragDropTK">
 
 ## How to run
-
+From source code
 - Download the repository
 - Open console in the main folder and run "python main.py"
+
+From .exe file
+- Download the latest release
+- Unpack .zip file into folder
+- Run .exe file
 
 ## License
 DragDropTK is licensed under the GPL-3.0 license and is free to use and open-source.
