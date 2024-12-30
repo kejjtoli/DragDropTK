@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import *
 import json
-import os.path
+#import os.path
 
 def generate_file(workspace, size, bld):
     main_code = []
