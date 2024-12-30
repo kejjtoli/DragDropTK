@@ -5,9 +5,9 @@
 ![GitHub Downloads](https://img.shields.io/github/downloads/kejjtoli/DragDropTK/total)
 
 
-**Design Tkinter based UI's with ease.**
+**Design Tkinter based GUI's with ease.**
 
-DragDropTK allows you to easily make tkinter UI designs with an easy to use drag drop interface and lets you easily export your designs into Python code without the need for any programming.
+DragDropTK allows you to easily make tkinter GUI designs with an easy to use drag drop interface and lets you easily export your designs into Python code without the need for any programming.
 
 <img align="center" src="https://github.com/kejjtoli/DragDropTK/blob/main/icons/interfaceExample.png?raw=true" alt="DragDropTK">
 
