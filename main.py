@@ -16,7 +16,9 @@ ImageLibrary = {
     "workspace" : Image.open("icons/workspace.png"),
     "<class 'tkinter.Label'>" : Image.open("icons/label.png"),
     "<class 'tkinter.Frame'>" : Image.open("icons/frame.png"),
-    "<class 'tkinter.Button'>" : Image.open("icons/button.png")
+    "<class 'tkinter.Button'>" : Image.open("icons/button.png"),
+    "<class 'tkinter.LabelFrame'>" : Image.open("icons/labelFrame.png"),
+    "<class 'tkinter.Entry'>" : Image.open("icons/entry.png")
 }
 
 root = Tk()
@@ -111,11 +113,9 @@ def loadFile():
 
             del build_lib["workspace"]
 
-            max_count = 0
-
             for key, value in build_lib.items():
                 mainType = value["mainType"]
-
+                
                 # Extract numerator
                 cnt = ""
                 for char in value["name"]:
@@ -123,9 +123,8 @@ def loadFile():
                         cnt = cnt + char
                 
                 if cnt != "":
-                    if int(cnt) > max_count:
-                        max_count = int(cnt)
-                        widgetCount[mainType] = max_count
+                    if int(cnt) > widgetCount[mainType]:
+                        widgetCount[mainType] = int(cnt)
                 
                 newObj = getattr(tk, value["tkType"])(workspace, name=value["name"])
 
@@ -145,9 +144,9 @@ def loadFile():
                         configArgs[x] = v
                     else:
                         if widgetArgs[x]["inType"] == "config":
-                            configArgs[x] = v
+                            configArgs[widgetArgs[x]["argName"]] = v
                         elif widgetArgs[x]["inType"] == "place":
-                            placeArgs[x] = v
+                            placeArgs[widgetArgs[x]["argName"]] = v
                         elif widgetArgs[x]["inType"] == "img":
                             if v != '':
                                 if v in ImageLibrary.keys():
@@ -162,22 +161,28 @@ def loadFile():
                                         newObj.image_ref = ImageLibrary[v]
                                     except:
                                         configArgs['image'] = ''
+                        elif widgetArgs[x]["inType"] == "var":
+                            newVar = tk.StringVar()
+                            newVar.set(v)
+                            newObj.var_ref = newVar
+                            newObj.config(textvariable=newVar)
 
 
+                if mainType == "<class 'tkinter.Entry'>":
+                    newObj.config(state="disabled")
+                    newObj.place(relwidth=0, relheight=0)
                 
                 newObj.config(**configArgs)
                 newObj.place(**placeArgs)
 
-                #if mainType == "<class 'tkinter.Button'>":
-                #    newObj.config(state="disabled")
-
-                dnd.add_draggable(newObj)
+                dnd.add_draggable(newObj, False)
                 addNewWidget(newObj, False)
             
             global defaultFilePath
             defaultFilePath = path.name
 
             root.update()
+            widgets.config(scrollregion=widgets.bbox('all'))
 
 
 def addElement(elType):
@@ -188,32 +193,49 @@ def addElement(elType):
 
         newFrame.config(bg="#d0d5d9")
 
-        #root.update()
-
         addNewWidget(newFrame, True)
-        dnd.add_draggable(newFrame)
+        dnd.add_draggable(newFrame, True)
     if elType == "Label":
         widgetCount["<class 'tkinter.Label'>"] += 1
         newFrame = tk.Label(workspace, text="Label Text", font=("Calibri", 20, "normal"), name="label"+str(widgetCount["<class 'tkinter.Label'>"]))
         newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER)
 
         newFrame.config(bg="#d0d5d9", fg="#1f2326")
-        
-        #root.update()
 
         addNewWidget(newFrame, True)
-        dnd.add_draggable(newFrame)
+        dnd.add_draggable(newFrame, True)
     if elType == "Button":
         widgetCount["<class 'tkinter.Button'>"] += 1
         newFrame = tk.Button(workspace, text="Button", font=("Calibri", 20, "normal"), name="button"+str(widgetCount["<class 'tkinter.Button'>"]))
         newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER)
 
         newFrame.config(bg="#d0d5d9", fg="#1f2326", activebackground="#d0d5d9", activeforeground="#1f2326")
-        
-        #root.update()
 
         addNewWidget(newFrame, True)
-        dnd.add_draggable(newFrame)
+        dnd.add_draggable(newFrame, True)
+    if elType == "LabelFrame":
+        widgetCount["<class 'tkinter.LabelFrame'>"] += 1
+        newFrame = tk.LabelFrame(workspace, height=64, width=128, text="Frame Text", font=("Calibri", 12, "normal"), name="labelFrame"+str(widgetCount["<class 'tkinter.LabelFrame'>"]))
+        newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER)
+
+        newFrame.config(bg="#d0d5d9", fg="#1f2326")
+
+        addNewWidget(newFrame, True)
+        dnd.add_draggable(newFrame, True)
+    if elType == "Entry":
+        widgetCount["<class 'tkinter.Entry'>"] += 1
+        entryVar = tk.StringVar()
+        newFrame = tk.Entry(workspace, font=("Calibri", 12, "normal"), name="entry"+str(widgetCount["<class 'tkinter.Entry'>"]), textvariable=entryVar)
+        entryVar.set("Entry field...")
+
+        newFrame.var_ref = entryVar
+
+        newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER, relwidth=0, width=128, relheight=0, height=32)
+
+        newFrame.config(bg="#d0d5d9", fg="#1f2326", state="disabled", disabledbackground="#d0d5d9", disabledforeground="#1f2326")
+
+        addNewWidget(newFrame, True)
+        dnd.add_draggable(newFrame, True)
 
 def setArg(var, argName, type):
     global currentEl
@@ -227,9 +249,9 @@ def setArg(var, argName, type):
             v = int(v)
         
         if widgetArgs[argName]["inType"] == "place":
-            currentEl.place(**{argName : v, "anchor" : CENTER})
+            currentEl.place(**{widgetArgs[argName]["argName"] : v, "anchor" : CENTER})
         elif widgetArgs[argName]["inType"] == "config":
-            currentEl.config(**{argName : v})
+            currentEl.config(**{widgetArgs[argName]["argName"] : v})
         elif widgetArgs[argName]["inType"] == "img":
             if v == '':
                 currentEl.config(image='')
@@ -262,15 +284,27 @@ def setArg(var, argName, type):
                 currentEl.config(font=(currentFont[0], int(v), currentFont[2]))
             else: 
                 currentEl.config(font=(currentFont[0], int(currentFont[1]), v))
+        elif widgetArgs[argName]["inType"] == "var":
+            currentEl.var_ref.set(v)
+        
+        inName = widgetArgs[argName]["argName"]
+
+        root.update()
+
+        dnd.align_box(currentEl, "select")
 
 
 def addNewArg(argName, parent, type):
     sVar = tk.StringVar()
     sVar.set('0')
 
+    setName = widgetArgs[argName]["argName"]
+    if "saveName" in widgetArgs[argName].keys():
+        setName = widgetArgs[argName]["saveName"]
+
     newFrame = tk.Frame(parent, height=12, pady=1,  bg="#252d36")
     newBox = tk.Entry(newFrame, textvariable=sVar, width=100)
-    newLabel = tk.Label(newFrame, text=argName, bg="#252d36", fg="white")
+    newLabel = tk.Label(newFrame, text=setName, bg="#252d36", fg="white")
     newLabel.config(width=8)
     newBox.config(width=18)
     
@@ -431,8 +465,10 @@ file.add_command(label ='Export', command= lambda: exportFile())
 add = Menu(menubar, tearoff = 0)
 menubar.add_cascade(label ='Add', menu = add)
 add.add_command(label ='Frame', command = lambda: addElement("Frame"))
+add.add_command(label ='LabelFrame', command = lambda: addElement("LabelFrame"))
 add.add_command(label ='Label', command = lambda: addElement("Label"))
 add.add_command(label ='Button', command = lambda: addElement("Button"))
+add.add_command(label ='Entry', command = lambda: addElement("Entry"))
 
 
 tools.pack(side=RIGHT, fill="both")

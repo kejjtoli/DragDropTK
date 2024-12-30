@@ -25,7 +25,7 @@ root.resizable(False, False)''')
     images_block = "\n_images = {"
 
     for widget in workspace.winfo_children():
-        if widget.winfo_name() != "barx" and widget.winfo_name() != "bary":
+        if widget.winfo_name() != "barx" and widget.winfo_name() != "bary" and widget.winfo_name() != "sel":
             elType = str(type(widget))
 
             newline = "\n" + widget.winfo_name() + " = tk." + str(elType[16:][:-2]) +"(root"
@@ -42,12 +42,23 @@ root.resizable(False, False)''')
                         v = '"'+ str(v) +'"'
                     
                     if wt["inType"] == "None" or wt["inType"] == "config":
-                        newline = newline + ", " + x + "=" + str(v)
+                        argName = wt["argName"]
+                        if "saveName" in wt.keys():
+                            argName = wt["saveName"]
+                        
+                        newline = newline + ", " + argName + "=" + str(v)
                     if wt["inType"] == "place":
-                        newline1 = newline1 + ", " + x + "=" + str(v)
+                        argName = wt["argName"]
+                        if "saveName" in wt.keys():
+                            argName = wt["saveName"]
+                        
+                        newline1 = newline1 + ", " + argName + "=" + str(v)
                     if wt["inType"] == "fontc":
                         buildFont[x] = str(v)
                         useFont = True
+                    if wt["inType"] == "var":
+                        main_code.append("\nvar" + widget.winfo_name() + " = tk.StringVar()\nvar" + widget.winfo_name() + ".set(" + str(v) + ")")
+                        newline = newline + ", textvariable=" + "var" + widget.winfo_name()
                     if wt["inType"] == "img":
                         if oldV != '':
                             if oldV in image_objects:
@@ -66,6 +77,8 @@ root.resizable(False, False)''')
 
                 main_code.insert(4, "\tprint('" + widget.winfo_name() + " pressed!')\n")
                 main_code.insert(4, "\ndef " + "press_" + widget.winfo_name() + "():\n")
+            if type(widget) == tk.Entry:
+                newline1 = newline1 + ", relwidth=0, relheight=0"
 
             newline = newline + ")"
             newline1 = newline1 + ")\n"
@@ -96,7 +109,7 @@ def save_to_json(workspace, size, bld, file):
     }
 
     for widget in workspace.winfo_children():
-        if widget.winfo_name() != "barx" and widget.winfo_name() != "bary":
+        if widget.winfo_name() != "barx" and widget.winfo_name() != "bary" and widget.winfo_name() != "sel":
             elType = str(type(widget))
             mainKey = widget.winfo_name()
 
@@ -117,6 +130,8 @@ def save_to_json(workspace, size, bld, file):
                         buildFont[x] = str(v)
                         useFont = True
                     if wt["inType"] == "img":
+                        data[mainKey][x] = v
+                    if wt["inType"] == "var":
                         data[mainKey][x] = v
 
             if useFont:
