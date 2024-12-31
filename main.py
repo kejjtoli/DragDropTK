@@ -58,9 +58,13 @@ def resetArgs(el, reset):
         else:
             attributes_list[x]["frame"].grid_forget()
         i += 1
-
+    
     root.update()
-    attributes.config(scrollregion=attributes.bbox('all'))
+    
+    if el == None:
+        attributes.config(scrollregion=(0, 0, 0, 0))
+    else:
+        attributes.config(scrollregion=attributes.bbox('all'))
 
 dnd = DragManager(root, resetArgs, workspace, workspaceSize)
 
