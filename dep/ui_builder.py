@@ -35,6 +35,14 @@ def resetSelectors(wis):
                 for s in w:
                     s.config(bg="#252d36")
 
+def refactor_elements():
+    global allElements
+    for widget, value in allElements.items():
+        allElements[widget] = {
+            "x" : widget.winfo_x() + int(widget.winfo_width() / 2),
+            "y" : widget.winfo_y() + int(widget.winfo_height() / 2)
+        }
+
 def snapToAxes(x, y, centerpoint, widget, barx, bary, hide_bar):
     snapped_x = False
     snapped_y = False
@@ -429,13 +437,13 @@ widgetArgs = {
         "argName" : "width",
         "argType" : "int",
         "inType" : "place",
-        "types" : ["<class 'tkinter.Entry'>"]
+        "types" : ["<class 'tkinter.Entry'>", "<class 'tkinter.Button'>"]
     },
     "height-e" : {
         "argName" : "height",
         "argType" : "int",
         "inType" : "place",
-        "types" : ["<class 'tkinter.Entry'>"]
+        "types" : ["<class 'tkinter.Entry'>", "<class 'tkinter.Button'>"]
     },
     "bg" : {
         "argName" : "bg",

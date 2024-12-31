@@ -180,9 +180,10 @@ def loadFile():
             
             global defaultFilePath
             defaultFilePath = path.name
-
+            
             root.update()
             widgets.config(scrollregion=widgets.bbox('all'))
+            refactor_elements()
 
 
 def addElement(elType):
@@ -207,7 +208,7 @@ def addElement(elType):
     if elType == "Button":
         widgetCount["<class 'tkinter.Button'>"] += 1
         newFrame = tk.Button(workspace, text="Button", font=("Calibri", 20, "normal"), name="button"+str(widgetCount["<class 'tkinter.Button'>"]))
-        newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER)
+        newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2), anchor=CENTER, width=128, height=42)
 
         newFrame.config(bg="#d0d5d9", fg="#1f2326", activebackground="#d0d5d9", activeforeground="#1f2326")
 
@@ -291,7 +292,8 @@ def setArg(var, argName, type):
 
         root.update()
 
-        dnd.align_box(currentEl, "select")
+        if currentEl.winfo_name() != "workspace":
+            dnd.align_box(currentEl, "select")
 
 
 def addNewArg(argName, parent, type):
