@@ -27,7 +27,7 @@ style = ttk.Style()
 root.title("DragDropTK")
 root.iconbitmap("dragdrop.ico")
 
-root.geometry(str(workspaceSize.x + toolbarWidth) + "x" + str(workspaceSize.y))
+root.geometry(str(workspaceSize.x + toolbarWidth + 100) + "x" + str(workspaceSize.y + 100))
 
 workspace = tk.Frame(root, width=workspaceSize.x, height=workspaceSize.y, name="workspace", bg="#f0f0f0")
 
@@ -367,12 +367,21 @@ def newWorkspace(xres, yres, toplevel):
             workspace.config(bg="#F0F0F0")
 
         global workspaceSize
-        workspaceSize = Vector2(int(xres), int(yres))
-        root.geometry(str(workspaceSize.x + toolbarWidth) + "x" + str(workspaceSize.y))
+        oldscreenSize_x, oldscreenSize_y = root.winfo_width() - toolbarWidth - 100, root.winfo_height() - 100
+        workspaceSize.set(int(xres), int(yres))
+
+        if workspaceSize.x > oldscreenSize_x:
+            oldscreenSize_x = workspaceSize.x
+        if workspaceSize.y > oldscreenSize_y:
+            oldscreenSize_y = workspaceSize.y
+
+        root.geometry(str(oldscreenSize_x + toolbarWidth + 100) + "x" + str(oldscreenSize_y + 100))
         workspace.config(width=workspaceSize.x, height=workspaceSize.y)
 
-        attributes.config(height=int((workspaceSize.y - 4) * 0.5))
-        widgets.config(height=int((workspaceSize.y - 4) * 0.4))
+        resize(None, True)
+
+        indicator_x.config(text=str(workspaceSize.x) + "px")
+        indicator_y.config(text=str(workspaceSize.y) + "px")
 
 def resetWorkspace():
     new_window = tk.Toplevel()
@@ -458,6 +467,9 @@ snapto.set(1)
 snapto_checkbox = tk.Checkbutton(settings, text="Snap", highlightthickness=0, variable=snapto, onvalue=1, offvalue=0, font=("Calibri", 10, "normal"), bg="#1a1e24", fg="white", selectcolor="#1a1e24", activebackground="#1a1e24", activeforeground="gray")
 snapto_checkbox.config(command=lambda: dnd.change_settings("snap", snapto.get()))
 
+indicator_x = tk.Label(root, fg="#494e54", text="500px", font=("Calibri", 15, "normal"), bg="#101317")
+indicator_y = tk.Label(root, fg="#494e54", text="400px", font=("Calibri", 15, "normal"), bg="#101317", wraplength=1)
+
 menubar = Menu(root)
 
 file = Menu(menubar, tearoff = 0)
@@ -478,7 +490,7 @@ add.add_command(label ='Entry', command = lambda: addElement("Entry"))
 
 
 tools.pack(side=RIGHT, fill="both")
-workspace.pack(side=LEFT)
+workspace.place(x=0, y=0, anchor=NW)
 
 attributes_scrollbar.pack(side=RIGHT, fill="y")
 attributes.pack(side=BOTTOM, fill="x")
@@ -523,6 +535,21 @@ listenerHotkeys = keyboard.GlobalHotKeys({'<ctrl>+d': inpt.on_duplicate})
 listener.start()
 listenerHotkeys.start()
 
-root.config(menu=menubar)
-root.resizable(False, False)
+old_width, old_height = root.winfo_width(), root.winfo_height()
+
+def resize(event, force=False):
+    global old_height, old_width
+    if root.winfo_width() != old_width or root.winfo_height() != old_height or force:
+        attributes.config(height=int((root.winfo_height() - 4) * 0.5))
+        widgets.config(height=int((root.winfo_height() - 4) * 0.5))
+        workspace.place(x=int((root.winfo_width() - toolbarWidth) / 2), y=int(root.winfo_height() / 2), anchor=CENTER)
+
+        indicator_x.place(anchor=S, x=int((root.winfo_width() - toolbarWidth) / 2), y=int((root.winfo_height() - workspaceSize.y) / 2))
+        indicator_y.place(anchor=E, x=int((root.winfo_width() - workspaceSize.x - toolbarWidth) / 2), y=int(root.winfo_height() / 2))
+
+        old_width, old_height = root.winfo_width(), root.winfo_height()
+
+root.bind("<Configure>", resize)
+root.config(menu=menubar, bg="#101317")
+root.resizable(True, True)
 root.mainloop()

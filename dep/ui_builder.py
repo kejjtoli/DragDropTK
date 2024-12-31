@@ -71,14 +71,14 @@ def snapToAxes(x, y, centerpoint, widget, barx, bary, hide_bar):
     # Generate guidelines
     
     if snapped_x and not hide_bar:
-        barx.place_forget()
+        #barx.place_forget()
         barx.place(y=0, x=x)
         barx.lift()
     else:
         barx.place_forget()
 
     if snapped_y and not hide_bar:
-        bary.place_forget()
+        #bary.place_forget()
         bary.place(y=y, x=0)
         bary.lift()
     else:
