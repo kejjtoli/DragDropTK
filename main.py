@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 from tkinter.filedialog import *
+from tkinter import colorchooser
 from dep.ui_builder import *
 import dep.ui_builder as bld
 import dep.file_builder as fls
@@ -18,7 +19,9 @@ ImageLibrary = {
     "<class 'tkinter.Frame'>" : Image.open("icons/frame.png"),
     "<class 'tkinter.Button'>" : Image.open("icons/button.png"),
     "<class 'tkinter.LabelFrame'>" : Image.open("icons/labelFrame.png"),
-    "<class 'tkinter.Entry'>" : Image.open("icons/entry.png")
+    "<class 'tkinter.Entry'>" : Image.open("icons/entry.png"),
+    "<class 'tkinter.Radiobutton'>" : Image.open("icons/radio.png"),
+    "<class 'tkinter.Checkbutton'>" : Image.open("icons/checkbutton.png")
 }
 
 root = Tk()
@@ -53,6 +56,8 @@ def resetArgs(el, reset):
     for x, wt in widgetArgs.items():
         if elType in wt["types"]:
             attributes_list[x]["stringVar"].set(str(bld.getElementArg(el, x)))
+            if wt["isColor"]:
+                attributes_list[x]["colorBox"].config(bg=str(bld.getElementArg(el, x)))
             if not attributes_list[x]["frame"].winfo_ismapped():
                 attributes_list[x]["frame"].grid(row=i, column=0, sticky="ew")
         else:
@@ -74,7 +79,7 @@ def exportFile():
     if path != '':
         file = open(str(path), mode='w')
 
-        file.writelines(fls.generate_file(workspace, workspaceSize, bld))
+        file.writelines(fls.generate_file(workspace, workspaceSize, bld, dnd))
 
         file.close()
 
@@ -84,7 +89,7 @@ def saveAsFile():
     if path != '':
         file = open(str(path), mode='w')
 
-        fls.save_to_json(workspace, workspaceSize, bld, file)
+        fls.save_to_json(workspace, workspaceSize, bld, file, dnd)
 
         file.close()
 
@@ -99,7 +104,7 @@ def saveFile():
     if defaultFilePath != '':
         file = open(str(defaultFilePath), mode='w')
 
-        fls.save_to_json(workspace, workspaceSize, bld, file)
+        fls.save_to_json(workspace, workspaceSize, bld, file, dnd)
 
         file.close()
 
@@ -117,10 +122,7 @@ def loadFile():
 
             del build_lib["workspace"]
 
-            for key, value in build_lib.items():
-                mainType = value["mainType"]
-                
-                # Extract numerator
+            def extractNumerator(mainType, value):
                 cnt = ""
                 for char in value["name"]:
                     if char.isnumeric():
@@ -129,6 +131,27 @@ def loadFile():
                 if cnt != "":
                     if int(cnt) > widgetCount[mainType]:
                         widgetCount[mainType] = int(cnt)
+
+            for key, value in list(build_lib.items()):
+                if value["tkType"] == "StringVar":
+                    mainType = value["mainType"]
+                
+                    # Extract numerator
+                    extractNumerator(mainType, value)
+
+                    newObj = tk.StringVar(name=value["name"])
+                    newObj.set(value["value"])
+
+                    dnd.add_var(newObj)
+
+                    del build_lib[key]
+
+
+            for key, value in build_lib.items():
+                mainType = value["mainType"]
+                
+                # Extract numerator
+                extractNumerator(mainType, value)
                 
                 newObj = getattr(tk, value["tkType"])(workspace, name=value["name"])
 
@@ -142,6 +165,8 @@ def loadFile():
 
                 #buildFont = {}
                 #addFont = False
+
+                # Add widgets
 
                 for x, v in value.items():
                     if x == "font":
@@ -241,17 +266,65 @@ def addElement(elType):
 
         addNewWidget(newFrame, True)
         dnd.add_draggable(newFrame, True)
+    if elType == "Radio":
+        widgetCount["<class 'tkinter.Radiobutton'>"] += 1
 
-def setArg(var, argName, type):
+        if len(dnd.all_vars) == 0:
+            widgetCount["<class 'tkinter.StringVar'>"] += 1
+            entryVar = tk.StringVar(name="stringVar"+str(widgetCount["<class 'tkinter.StringVar'>"]))
+            entryVar.set("1")
+            dnd.add_var(entryVar)
+        
+        newFrame = tk.Radiobutton(workspace, font=("Calibri", 12, "normal"), name="radioButton"+str(widgetCount["<class 'tkinter.Radiobutton'>"]), variable=dnd.all_vars[0], text="Radio Button", value="0")
+
+        newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER, relwidth=0, width=128, relheight=0, height=32)
+
+        newFrame.config(bg="#d0d5d9", fg="#1f2326", state="normal", activeforeground="#1f2326", activebackground="#d0d5d9")
+
+        addNewWidget(newFrame, True)
+        dnd.add_draggable(newFrame, True)
+    if elType == "Check":
+        if len(dnd.all_vars) == 0:
+            widgetCount["<class 'tkinter.StringVar'>"] += 1
+            entryVar = tk.StringVar(name="stringVar"+str(widgetCount["<class 'tkinter.StringVar'>"]))
+            entryVar.set("off")
+            dnd.add_var(entryVar)
+
+        widgetCount["<class 'tkinter.Checkbutton'>"] += 1
+        newFrame = tk.Checkbutton(workspace, font=("Calibri", 12, "normal"), name="checkButton"+str(widgetCount["<class 'tkinter.Checkbutton'>"]), variable=dnd.all_vars[0], offvalue="off", onvalue="on", text="Check Button")
+
+        newFrame.var_ref = dnd.all_vars[0]
+
+        newFrame.place(x=int(workspaceSize.x / 2),y=int(workspaceSize.y / 2),anchor=CENTER, relwidth=0, width=128, relheight=0, height=32)
+
+        newFrame.config(bg="#d0d5d9", fg="#1f2326", activebackground="#d0d5d9", activeforeground="#1f2326")
+
+        addNewWidget(newFrame, True)
+        dnd.add_draggable(newFrame, True)
+    if elType == "Var":
+        widgetCount["<class 'tkinter.StringVar'>"] += 1
+        entryVar = tk.StringVar(name="stringVar"+str(widgetCount["<class 'tkinter.StringVar'>"]))
+        entryVar.set("1")
+        dnd.add_var(entryVar)
+
+def getVarFromStr(string):
+    for v in dnd.all_vars:
+        if string == str(v):
+            return v
+    return None
+
+def setArg(var=None, argName=None, atype=None, directVar=None):
     global currentEl
     if currentEl != None:
         root.focus()
-        v = var.get()
+        v = directVar or var.get()
 
-        if type == "string":
+        if atype == "string":
             v = str(v)
-        else:
+        elif atype == "int":
             v = int(v)
+        elif atype == "var":
+            v = getVarFromStr(v)
         
         if widgetArgs[argName]["inType"] == "place":
             currentEl.place(**{widgetArgs[argName]["argName"] : v, "anchor" : CENTER})
@@ -299,6 +372,19 @@ def setArg(var, argName, type):
         if currentEl.winfo_name() != "workspace":
             dnd.align_box(currentEl, "select")
 
+        if argName == "x" or argName == "y":
+            refactor_elements(w=currentEl)
+
+        if widgetArgs[argName]["isColor"]:
+            attributes_list[argName]["colorBox"].config(bg=v)
+
+
+def openColorPicker(attributeName, type, sVar):
+    global currentEl
+    color_code = colorchooser.askcolor(title="Set color for " + attributeName, color=getElementArg(currentEl, attributeName))
+    if color_code[1] != None:
+        setArg(argName=attributeName, atype=type, directVar=color_code[1])
+        sVar.set(str(color_code[1]))
 
 def addNewArg(argName, parent, type):
     sVar = tk.StringVar()
@@ -309,12 +395,26 @@ def addNewArg(argName, parent, type):
         setName = widgetArgs[argName]["saveName"]
 
     newFrame = tk.Frame(parent, height=12, pady=1,  bg="#252d36")
-    newBox = tk.Entry(newFrame, textvariable=sVar, width=100)
+    newBox = None 
+    if argName == "variable":
+        newBox = ttk.Combobox(newFrame, textvariable=sVar)
+        dnd.set_combobox(newBox)
+        newBox.config(width=14)
+    else:
+        newBox = tk.Entry(newFrame, textvariable=sVar)
+        newBox.config(width=18)
+        
     newLabel = tk.Label(newFrame, text=setName, bg="#252d36", fg="white")
     newLabel.config(width=8)
-    newBox.config(width=18)
-    
+
     newLabel.pack(side=LEFT, padx=1)
+
+    colorPicker = None
+    if widgetArgs[argName]["isColor"]:
+        colorPicker = tk.Frame(newFrame, bg="white", width=18, height=18, highlightthickness=1, highlightbackground="#1a1e24", cursor="hand2")
+        colorPicker.pack(side=LEFT, padx=(4,2))
+
+        newBox.config(width=14)
     newBox.pack(side=LEFT, padx=(4, 4))
 
     if widgetArgs[argName]['inType'] == "None":
@@ -323,9 +423,16 @@ def addNewArg(argName, parent, type):
     global attributes_list
     attributes_list[argName] = {
         "stringVar" : sVar,
-        "frame" : newFrame
+        "frame" : newFrame,
+        "colorBox" : colorPicker,
+        "entry" : newBox
     }
 
+    if colorPicker != None:
+        colorPicker.bind("<ButtonRelease-1>", lambda event: openColorPicker(argName, type, sVar))
+    
+    if argName == "variable":
+        newBox.bind("<<ComboboxSelected>>", lambda event: setArg(sVar, argName, type))
     newBox.bind("<Return>", lambda event: setArg(sVar, argName, type))
 
 def addNewWidget(widget, ru):
@@ -454,6 +561,8 @@ attributes_label = ttk.Label(tools, text="Attributes", font=("Calibri", 12, "nor
 attributes_scrollbar = ttk.Scrollbar(attributes, orient="vertical",command=attributes.yview)
 attributes.config(yscrollcommand=attributes_scrollbar.set)
 
+attributes_packer = tk.Frame(attributes, bg="#1a1e24")
+
 widgets = tk.Canvas(tools, width=toolbarWidth, height=int((workspaceSize.y - 4) * 0.4), highlightthickness=0, bg="#1a1e24")
 widgets_label = ttk.Label(tools, text="Widgets", font=("Calibri", 12, "normal"), background="#1a1e24", foreground="white")
 widgets_scrollbar = ttk.Scrollbar(widgets, orient="vertical",command=widgets.yview)
@@ -487,6 +596,9 @@ add.add_command(label ='LabelFrame', command = lambda: addElement("LabelFrame"))
 add.add_command(label ='Label', command = lambda: addElement("Label"))
 add.add_command(label ='Button', command = lambda: addElement("Button"))
 add.add_command(label ='Entry', command = lambda: addElement("Entry"))
+add.add_command(label ='RadioButton', command = lambda: addElement("Radio"))
+add.add_command(label ='CheckButton', command = lambda: addElement("Check"))
+add.add_command(label ='Variable', command = lambda: addElement("Var"))
 
 
 tools.pack(side=RIGHT, fill="both")
@@ -495,6 +607,8 @@ workspace.place(x=0, y=0, anchor=NW)
 attributes_scrollbar.pack(side=RIGHT, fill="y")
 attributes.pack(side=BOTTOM, fill="x")
 attributes_label.pack(side=BOTTOM, fill="x")
+attributes_packer.pack(side=LEFT, fill="both")
+
 attributes.grid_propagate(False)
 attributes.pack_propagate(False)
 

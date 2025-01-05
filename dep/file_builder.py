@@ -3,7 +3,7 @@ from tkinter import *
 import json
 #import os.path
 
-def generate_file(workspace, size, bld):
+def generate_file(workspace, size, bld, dnd):
     main_code = []
 
     main_code.append('''import tkinter as tk
@@ -15,14 +15,17 @@ root.resizable(False, False)''')
     
     main_code.append('\nroot.geometry("' + str(size.x) + "x" + str(size.y) + '")')
     main_code.append('\nroot.config(bg="'+ workspace.cget('bg') +'")\n')
-    
+
     main_code.append('\n# Button functions\n')
 
     main_code.append('\n# Adding widgets\n')
-    
+
     image_objects = []
 
     images_block = "\n_images = {"
+
+    for var in dnd.all_vars:
+        main_code.append("\n" + str(var) + " = tk.StringVar()\n" + str(var) + ".set('" + var.get() + "')\n")
 
     for widget in workspace.winfo_children():
         if widget.winfo_name() != "barx" and widget.winfo_name() != "bary" and widget.winfo_name() != "sel":
@@ -98,7 +101,7 @@ root.resizable(False, False)''')
 def load_from_json(file):
     return json.load(file)
 
-def save_to_json(workspace, size, bld, file):
+def save_to_json(workspace, size, bld, file, dnd):
 
     data = {
         "workspace" : {
@@ -107,6 +110,14 @@ def save_to_json(workspace, size, bld, file):
             "bg" : workspace.cget("bg")
         }
     }
+
+    for var in dnd.all_vars:
+        data[str(var)] = {
+            "value" : var.get(),
+            "name" : str(var),
+            "tkType" : "StringVar",
+            "mainType" : "<class 'tkinter.StringVar'>"
+        }
 
     for widget in workspace.winfo_children():
         if widget.winfo_name() != "barx" and widget.winfo_name() != "bary" and widget.winfo_name() != "sel":
@@ -136,6 +147,7 @@ def save_to_json(workspace, size, bld, file):
 
             if useFont:
                 data[mainKey]["font"] = (buildFont["font-family"], buildFont["font-size"], buildFont["font-type"])
+
             
             data[mainKey]["tkType"] = elType[16:][:-2]
             data[mainKey]["mainType"] = elType

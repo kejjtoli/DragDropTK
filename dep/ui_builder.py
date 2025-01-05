@@ -13,6 +13,9 @@ widgetCount = {
     "<class 'tkinter.Button'>" : 0,
     "<class 'tkinter.LabelFrame'>" : 0,
     "<class 'tkinter.Entry'>" : 0,
+    "<class 'tkinter.Radiobutton'>" : 0,
+    "<class 'tkinter.StringVar'>" : 0,
+    "<class 'tkinter.Checkbutton'>" : 0,
 }
 
 class Vector2:
@@ -35,13 +38,20 @@ def resetSelectors(wis):
                 for s in w:
                     s.config(bg="#252d36")
 
-def refactor_elements():
+def refactor_elements(w=None):
     global allElements
-    for widget, value in allElements.items():
-        allElements[widget] = {
-            "x" : widget.winfo_x() + int(widget.winfo_width() / 2),
-            "y" : widget.winfo_y() + int(widget.winfo_height() / 2)
-        }
+    if w == None:
+        for widget, value in allElements.items():
+            allElements[widget] = {
+                "x" : widget.winfo_x() + int(widget.winfo_width() / 2),
+                "y" : widget.winfo_y() + int(widget.winfo_height() / 2)
+            }
+    else:
+        allElements[w] = {
+                "x" : w.winfo_x() + int(w.winfo_width() / 2),
+                "y" : w.winfo_y() + int(w.winfo_height() / 2)
+            }
+    
 
 def snapToAxes(x, y, centerpoint, widget, barx, bary, hide_bar):
     snapped_x = False
@@ -88,6 +98,9 @@ def snapToAxes(x, y, centerpoint, widget, barx, bary, hide_bar):
 
 class DragManager():
     def __init__(self, widget, fun, workspace, workspaceSize):
+        self.all_vars = []
+
+        self.combobox = None
         self.root = widget
         self.selected = False
         self.fun = fun
@@ -105,6 +118,14 @@ class DragManager():
         
         workspace.bind("<ButtonPress-1>", self.remove_selection)
     
+    def set_combobox(self, box):
+        self.combobox = box
+
+    def add_var(self, wi):
+        self.all_vars.append(wi)
+        if self.combobox != None:
+            self.combobox.config(values=self.all_vars)
+
     def change_settings(self, setting, var):
         self.use_snap = var
 
@@ -247,6 +268,8 @@ class DragManager():
         for w, key in allElements.items():
             w.destroy()
         
+        self.all_vars.clear()
+
         allElements.clear()
 
         self.selection_box.place_forget()
@@ -398,6 +421,14 @@ def getElementArg(el, info):
         return el.cget("disabledforeground")
     elif info == "text-e":
         return el.var_ref.get()
+    elif info == "value":
+        return el.cget("value")
+    elif info == "variable":
+        return str(el.cget("variable"))
+    elif info == "onvalue":
+        return el.cget("onvalue")
+    elif info == "offvalue":
+        return el.cget("offvalue")
 
 
     return None
@@ -407,73 +438,85 @@ widgetArgs = {
         "argName" : "name",
         "argType" : "string",
         "inType" : "None",
-        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "workspace", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "workspace", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "x" : {
         "argName" : "x",
         "argType" : "int",
         "inType" : "place",
-        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "y" : {
         "argName" : "y",
         "argType" : "int",
         "inType" : "place",
-        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "width" : {
         "argName" : "width",
         "argType" : "int",
         "inType" : "config",
+        "isColor" : False,
         "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.LabelFrame'>"]
     },
     "height" : {
         "argName" : "height",
         "argType" : "int",
         "inType" : "config",
+        "isColor" : False,
         "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.LabelFrame'>"]
     },
     "width-e" : {
         "argName" : "width",
         "argType" : "int",
         "inType" : "place",
-        "types" : ["<class 'tkinter.Entry'>", "<class 'tkinter.Button'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Entry'>", "<class 'tkinter.Button'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "height-e" : {
         "argName" : "height",
         "argType" : "int",
         "inType" : "place",
-        "types" : ["<class 'tkinter.Entry'>", "<class 'tkinter.Button'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Entry'>", "<class 'tkinter.Button'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "bg" : {
         "argName" : "bg",
         "argType" : "string",
         "inType" : "config",
-        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "workspace", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>"]
+        "isColor" : True,
+        "types" : ["<class 'tkinter.Frame'>", "<class 'tkinter.Label'>", "workspace", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "activebackground" : {
         "argName" : "activebackground",
         "argType" : "string",
         "inType" : "config",
-        "types" : ["<class 'tkinter.Button'>"]
+        "isColor" : True,
+        "types" : ["<class 'tkinter.Button'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "fg" : {
         "argName" : "fg",
         "argType" : "string",
         "inType" : "config",
-        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>"]
+        "isColor" : True,
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "activeforeground" : {
         "argName" : "activeforeground",
         "argType" : "string",
         "inType" : "config",
-        "types" : ["<class 'tkinter.Button'>"]
+        "isColor" : True,
+        "types" : ["<class 'tkinter.Button'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "bg-de" : {
         "saveName" : "bg",
         "argName" : "disabledbackground",
         "argType" : "string",
         "inType" : "config",
+        "isColor" : True,
         "types" : ["<class 'tkinter.Entry'>"]
     },
     "fg-de" : {
@@ -481,43 +524,78 @@ widgetArgs = {
         "argName" : "disabledforeground",
         "argType" : "string",
         "inType" : "config",
+        "isColor" : True,
         "types" : ["<class 'tkinter.Entry'>"]
     },
     "text" : {
         "argName" : "text",
         "argType" : "string",
         "inType" : "config",
-        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "text-e" : {
         "saveName" : "text",
         "argName" : "text-e",
         "argType" : "string",
         "inType" : "var",
+        "isColor" : False,
         "types" : ["<class 'tkinter.Entry'>"]
     },
     "font-family" : {
         "argName" : "font-family",
         "argType" : "string",
         "inType" : "fontc",
-        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "font-size" : {
         "argName" : "font-size",
         "argType" : "string",
         "inType" : "fontc",
-        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "font-type" : {
         "argName" : "font-type",
         "argType" : "string",
         "inType" : "fontc",
-        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.LabelFrame'>", "<class 'tkinter.Entry'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
     "image-path" : {
         "argName" : "image-path",
         "argType" : "string",
         "inType" : "img",
-        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>"]
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Label'>", "<class 'tkinter.Button'>", "<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
+    },
+    "value" : {
+        "argName" : "value",
+        "argType" : "string",
+        "inType" : "config",
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Radiobutton'>"]
+    },
+    "onvalue" : {
+        "argName" : "onvalue",
+        "argType" : "string",
+        "inType" : "config",
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Checkbutton'>"]
+    },
+    "offvalue" : {
+        "argName" : "offvalue",
+        "argType" : "string",
+        "inType" : "config",
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Checkbutton'>"]
+    },
+    "variable" : {
+        "argName" : "variable",
+        "argType" : "var",
+        "inType" : "config",
+        "isColor" : False,
+        "types" : ["<class 'tkinter.Radiobutton'>", "<class 'tkinter.Checkbutton'>"]
     },
 }
